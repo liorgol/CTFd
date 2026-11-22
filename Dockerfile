@@ -53,3 +53,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 USER 1001
 EXPOSE 8000
 ENTRYPOINT ["/opt/CTFd/docker-entrypoint.sh"]
+# Added by CVE Remediator: security updates for packages the image ships
+USER root
+RUN for init in $(find / -xdev -path '*/site-packages/setuptools/__init__.py' 2>/dev/null); do root="${init%/lib/python*}"; py=$(ls "$root"/bin/python3* 2>/dev/null | head -n 1); if [ -n "$py" ] && "$py" -m pip --version >/dev/null 2>&1; then "$py" -m pip install --no-cache-dir --upgrade setuptools; fi; done
+RUN for init in $(find / -xdev -path '*/site-packages/wheel/__init__.py' 2>/dev/null); do root="${init%/lib/python*}"; py=$(ls "$root"/bin/python3* 2>/dev/null | head -n 1); if [ -n "$py" ] && "$py" -m pip --version >/dev/null 2>&1; then "$py" -m pip install --no-cache-dir --upgrade wheel; fi; done
+USER 1001
