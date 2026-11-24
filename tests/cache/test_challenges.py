@@ -1,14 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from contextlib import contextmanager
+
 from CTFd.models import Users
 from tests.helpers import (
     create_ctfd,
     destroy_ctfd,
-    login_as_user,
     register_user,
     simulate_user_activity,
 )
+from tests.helpers import login_as_user as _login_as_user
+
+
+@contextmanager
+def login_as_user(*args, **kwargs):
+    # Do not enter the client's preserved request context; nesting two of
+    # them breaks context teardown on newer Flask/Werkzeug.
+    yield _login_as_user(*args, **kwargs)
 
 
 def test_adding_challenge_clears_cache():

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from urllib.parse import urljoin
+
 from flask import Flask
 
 from tests.helpers import (
@@ -59,7 +61,9 @@ def test_admin_access():
         for route in routes:
             r = client.get(route)
             assert r.status_code == 302
-            assert r.location.startswith("http://localhost/login")
+            assert urljoin("http://localhost", r.location).startswith(
+                "http://localhost/login"
+            )
 
         admin = login_as_user(app, name="admin")
         routes.remove("/admin")
@@ -78,5 +82,7 @@ def test_get_admin_as_user():
         client = login_as_user(app)
         r = client.get("/admin")
         assert r.status_code == 302
-        assert r.location.startswith("http://localhost/login")
+        assert urljoin("http://localhost", r.location).startswith(
+            "http://localhost/login"
+        )
     destroy_ctfd(app)

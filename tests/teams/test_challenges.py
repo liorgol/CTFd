@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from urllib.parse import urljoin
+
 from CTFd.utils import set_config
 from CTFd.utils.scores import get_standings
 from tests.helpers import (
@@ -51,7 +53,9 @@ def test_anonymous_users_view_public_challenges_without_team():
         with app.test_client() as client:
             r = client.get("/challenges")
             assert r.status_code == 302
-            assert r.location.startswith("http://localhost/login")
+            assert urljoin("http://localhost", r.location).startswith(
+                "http://localhost/login"
+            )
 
         set_config("challenge_visibility", "public")
         with app.test_client() as client:
@@ -61,5 +65,7 @@ def test_anonymous_users_view_public_challenges_without_team():
         with login_as_user(app) as client:
             r = client.get("/challenges")
             assert r.status_code == 302
-            assert r.location.startswith("http://localhost/team")
+            assert urljoin("http://localhost", r.location).startswith(
+                "http://localhost/team"
+            )
     destroy_ctfd(app)

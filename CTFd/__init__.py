@@ -4,9 +4,10 @@ import sys
 import time
 import weakref
 from distutils.version import StrictVersion
+from urllib.parse import urlencode
 
 import jinja2
-from flask import Flask, Request
+from flask import Flask, Request, Response
 from flask_babel import Babel
 from flask_migrate import upgrade
 from jinja2 import FileSystemLoader
@@ -48,12 +49,18 @@ class CTFdRequest(Request):
         self.path = self.script_root + self.path
 
 
+class CTFdResponse(Response):
+    # Werkzeug >= 2.1 defaults this to False; keep Location headers absolute
+    autocorrect_location_header = True
+
+
 class CTFdFlask(Flask):
     def __init__(self, *args, **kwargs):
         """Overriden Jinja constructor setting a custom jinja_environment"""
         self.jinja_environment = SandboxedBaseEnvironment
         self.session_interface = CachingSessionInterface(key_prefix="session")
         self.request_class = CTFdRequest
+        self.response_class = CTFdResponse
 
         # Store server start time
         self.start_time = datetime.datetime.utcnow()
@@ -61,6 +68,17 @@ class CTFdFlask(Flask):
         # Create generally unique run identifier
         self.run_id = sha256(str(self.start_time))[0:8]
         Flask.__init__(self, *args, **kwargs)
+
+    def url_for(self, endpoint, **values):
+        # Werkzeug >= 2.3 no longer percent-encodes '/' and '?' in query values.
+        # Encode the `next` parameter fully as before (e.g. next=%2Fchallenges%3F).
+        nxt = values.pop("next", None)
+        url = super(CTFdFlask, self).url_for(endpoint, **values)
+        if nxt is not None:
+            base, sep, frag = url.partition("#")
+            base += ("&" if "?" in base else "?") + urlencode({"next": nxt})
+            url = base + sep + frag
+        return url
 
     def create_jinja_environment(self):
         """Overridden jinja environment constructor"""

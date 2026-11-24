@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from urllib.parse import urljoin
+
 from CTFd.models import Teams, Users
 from CTFd.utils import set_config
 from tests.helpers import (
@@ -18,8 +20,9 @@ def test_oauth_not_configured():
     with app.app_context():
         with app.test_client() as client:
             r = client.get("/oauth", follow_redirects=False)
-            assert r.location == "http://localhost/login"
-            r = client.get(r.location)
+            location = urljoin("http://localhost", r.location)
+            assert location == "http://localhost/login"
+            r = client.get(location)
             resp = r.get_data(as_text=True)
             assert "OAuth Settings not configured" in resp
     destroy_ctfd(app)

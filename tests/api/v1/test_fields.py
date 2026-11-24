@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from contextlib import nullcontext
+
 from CTFd.models import Fields, TeamFieldEntries, Teams, UserFieldEntries, Users
 from tests.helpers import (
     create_ctfd,
@@ -173,7 +175,9 @@ def test_api_self_fields_permissions():
             with client.session_transaction() as sess:
                 assert sess["id"]
 
-        with login_as_user(app) as user, login_as_user(app, name="admin") as admin:
+        user = login_as_user(app)
+        admin = login_as_user(app, name="admin")
+        with nullcontext():
             r = user.get("/api/v1/users/me")
             resp = r.get_json()
             assert resp["data"]["fields"] == [
@@ -281,7 +285,9 @@ def test_api_team_self_fields_permissions():
 
         assert len(team.field_entries) == 2
 
-        with login_as_user(app) as user, login_as_user(app, name="admin") as admin:
+        user = login_as_user(app)
+        admin = login_as_user(app, name="admin")
+        with nullcontext():
             r = user.get("/api/v1/teams/me")
             resp = r.get_json()
             assert resp["data"]["fields"] == [
