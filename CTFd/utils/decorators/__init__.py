@@ -1,6 +1,9 @@
 import functools
 
-from flask import abort, jsonify, redirect, request, url_for
+from urllib.parse import urljoin
+
+from flask import abort, jsonify, request, url_for
+from flask import redirect as _flask_redirect
 from flask_babel import gettext
 
 from CTFd.cache import cache
@@ -9,6 +12,12 @@ from CTFd.utils import user as current_user
 from CTFd.utils.config import is_teams_mode
 from CTFd.utils.dates import ctf_ended, ctf_started, ctftime, view_after_ctf
 from CTFd.utils.user import authed, get_current_team, get_current_user, is_admin
+
+
+def redirect(location, code=302):
+    # Werkzeug >= 2.1 no longer rewrites Location headers to absolute URLs.
+    # Keep the absolute Location values these redirects had before.
+    return _flask_redirect(urljoin(request.host_url, location), code=code)
 
 
 def during_ctf_time_only(f):
